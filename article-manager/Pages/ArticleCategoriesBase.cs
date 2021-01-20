@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using article_manager.Models;
 using article_manager.Services;
+using frontendlib.Models;
 using Microsoft.AspNetCore.Components;
 
 namespace article_manager.Pages
@@ -10,8 +11,18 @@ namespace article_manager.Pages
         [Inject]
         private ICRUDService<ArticleCategoryListItem, ArticleCategoryItem> service { get; set; }
 
-        protected ArticleCategoryListItem[] articleCategoryListItems;
-        protected ArticleCategoryItem currentCategory;
+        protected ItemListModel categoriesModel = new ItemListModel()
+        {
+            ItemName = "Category",
+            Headers = new string[] { "Id", "Name" },
+            Items = new ArticleCategoryListItem[0]
+        };
+
+        protected ItemDetailsModel<ArticleCategoryItem> categoryModel = new ItemDetailsModel<ArticleCategoryItem>()
+        {
+            ItemName = "Category"
+        };
+
         protected string error;
 
         protected override async Task OnInitializedAsync()
@@ -21,14 +32,14 @@ namespace article_manager.Pages
 
         public async Task AddCategory()
         {
-            this.currentCategory = await service.GetNew();
+            this.categoryModel.Item = await service.GetNew();
         }
 
-        public async Task DeleteCategory(ArticleCategoryListItem item)
+        public async Task DeleteCategory(object item)
         {
             try
             {
-                await service.Delete(item.ID);
+                await service.Delete(((ArticleCategoryListItem)item).ID);
                 await ShowList();
             }
             catch (System.Exception ex)
@@ -38,22 +49,22 @@ namespace article_manager.Pages
             }
         }
 
-        public async Task EditCategory(ArticleCategoryListItem item)
+        public async Task EditCategory(object item)
         {
-            this.currentCategory = await service.Get(item.ID);
+            this.categoryModel.Item = await service.Get(((ArticleCategoryListItem)item).ID);
         }
 
         public async Task SaveCategory()
         {
             try
             {
-                if (currentCategory.Id == 0)
+                if (categoryModel.Item.Id == 0)
                 {
-                    await service.Create(currentCategory);
+                    await service.Create(categoryModel.Item);
                 }
                 else
                 {
-                    await service.Update(currentCategory);
+                    await service.Update(categoryModel.Item);
                 }
             }
             catch (System.Exception ex)
@@ -64,8 +75,8 @@ namespace article_manager.Pages
 
         public async Task ShowList()
         {
-            articleCategoryListItems = await service.GetList();
-            currentCategory = null;
+            categoriesModel.Items = await service.GetList();
+            categoryModel.Item = null;
         }
     }
 }
