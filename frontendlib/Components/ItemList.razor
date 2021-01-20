@@ -1,0 +1,86 @@
+@inject IJSRuntime JSRuntime;
+
+<button type="button" class="btn btn-primary" @onclick="OnAddClick">Add Category</button>
+<table class="table mt-3">
+    <thead>
+        <tr>
+            <th></th>
+            @foreach (var header in Model.Headers)
+            {
+                <th>@header</th>
+            }
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null)
+        {
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>
+                        <button type="button" class="btn btn-warning"
+                            @onclick="e => OnEditClick.InvokeAsync(item)">Edit</button>
+                    </td>
+                    @foreach(var property in item.GetType().GetProperties())
+                        {
+                            <td>@property.GetValue(item)</td>
+                        }
+                    <td>
+                        @* <button type="button" class="btn btn-danger"
+                            @onclick="e => OnDeleteClick.InvokeAsync(item)">Delete</button> *@
+
+                        <td><button class="btn btn-danger" @onclick="e => ShowConfirm(item)">Delete</button></td>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<div class="modal" id="deletecategorymodal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Delete @Model.ItemName</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        Do you want to delete the @Model.ItemName? 
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" @onclick="OnYesClick">Yes</button>
+        <button type="button" class="btn btn-default" data-bs-dismiss="modal" >No</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+@code{
+    [Parameter]
+    public ItemListModel Model { get; set; }
+
+    [Parameter]
+    public EventCallback OnAddClick { get; set; }
+
+    [Parameter]
+    public EventCallback<object> OnEditClick { get; set; }
+
+    [Parameter]
+    public EventCallback<object> OnDeleteClick { get; set; }
+
+    private object itemToDelete;
+
+    private async Task ShowConfirm(object item)
+    {
+      this.itemToDelete = item;
+      await JSRuntime.InvokeVoidAsync("showConfirmDelete", "deletecategorymodal");
+    }
+
+    private async Task OnYesClick()
+    {
+      await OnDeleteClick.InvokeAsync(this.itemToDelete);
+      await JSRuntime.InvokeVoidAsync("hideConfirmDelete", "deletecategorymodal");
+    }
+
+}
